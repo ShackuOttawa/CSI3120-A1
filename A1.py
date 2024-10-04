@@ -83,14 +83,23 @@ def parse_tokens(s_: str) -> Union[List[str], bool]:
 
     s = s_[:]  #  Don't modify the original input string
     s = tokenizer(s)
+    tokens = s
+    s = "".join(s).replace(" ", "")
+    s = s[1:-1]
     s = parse(s)
-    print(s)
-    # TODO
+    if('(' in s or ')' in s):
+        print("problem", s)
+        print("Input has imbalance in brackets.")
 
-    return []
+    tokenpreparer = "".join(tokens).replace(" ", "").replace("v", "<var>")
+
+    if s == "e":
+        return [tokenpreparer]
+    else:
+        return False
 
 
-def tokenizer(s: str) -> str:
+def tokenizer(s: str) -> List[str]:
     i = 0
     result = []
     
@@ -101,12 +110,12 @@ def tokenizer(s: str) -> str:
             result.append('v')
             i = last + 1  # Move i to the next character after the word
         else:
-            # Non-alphabetic characters like space are kept as they are
+            # Non-alphabetic characters are kept as they are
             result.append(s[i])
             i += 1
-    
-    # Join the result list into a string
-    return ''.join(result).replace(" ", "")
+            
+    # return the result list
+    return result
 
 
 # Finds the full variable name after given the first letter
@@ -115,29 +124,16 @@ def findFullVar(s: str, start: int) -> int:
         start += 1
     return start
 
+# Main parse function. Takes string s and should return "e" if a valid string
 def parse(s: str) -> str:
 
     # Iterator variable
     slen = len(s) - 1
     acceptedValues = ["v", "(", ")", ".", "\\"]
     result = ""
-    bracketHolder = ""
-    bracketCounter = 0
-    i = 0
-    for letter in s:
-        if letter == "(":
-            bracketCounter+=1
-        elif letter == ")":
-            bracketCounter-=1
-        if bracketCounter < 0:
-            print("Invalid number of brackets at index", i)
-        i += 1
-    if bracketCounter > 0:
-         print("Invalid number of brackets")
 
     # Go through the full length of string s
     while slen != -1:
-
 
         # Invalid character error
         if s[slen] not in acceptedValues:
@@ -155,6 +151,7 @@ def parse(s: str) -> str:
                         result = result
                     else:
                         # If a backslash to the right does exist, make slen skip over the backslash
+                        print("Backslash spotted!")
                         slen -= 1
             
             # Else, this e is the first. append e to the start of result
@@ -167,15 +164,17 @@ def parse(s: str) -> str:
         
         # If a closing bracket is found, recursively parse the inside of the bracket.
         elif s[slen] == ")":
+            tempslen = slen
+
             if(slen == 0):
-                print("Error: Unclosed Bracket")
+                print("Error: Closed with no opened bracket")
             else:
                 result = ")" + result
-                result = parse(s[:-1]) + result
+                result = parse(s[:slen]) + result
 
                 stack = []
                 stack.append(")")
-                tempslen = slen
+                
 
                 while stack != [] and tempslen > 0:
                     if s[tempslen] == ")":
@@ -185,6 +184,13 @@ def parse(s: str) -> str:
                     
                     tempslen -= 1
 
+                if result[-3:] == "(e)":
+                    result = result[:-3] + "e"
+
+                if result[-4:-1] == "(e)":
+                    result = result[:-4] + "e"
+
+                
             # Subtract from slen the distance from this bracket to the associated opener
 
             slen -= slen - tempslen
@@ -265,7 +271,7 @@ if __name__ == "__main__":
 
     print("\n\nChecking valid examples...")
     read_lines_from_txt_check_validity(valid_examples_fp)
-    #read_lines_from_txt_output_parse_tree(valid_examples_fp)
+    read_lines_from_txt_output_parse_tree(valid_examples_fp)
 
     print("Checking invalid examples...")
-    #read_lines_from_txt_check_validity(invalid_examples_fp)
+    read_lines_from_txt_check_validity(invalid_examples_fp)

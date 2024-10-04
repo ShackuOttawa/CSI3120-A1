@@ -5,11 +5,10 @@ def parse(s: str) -> str:
     slen = len(s) - 1
     acceptedValues = ["v", "(", ")", ".", "\\"]
     result = ""
-    bracketHolder = ""
 
     # Go through the full length of string s
     while slen != -1:
-
+        print("Begin:", slen, s)
 
         # Invalid character error
         if s[slen] not in acceptedValues:
@@ -17,6 +16,7 @@ def parse(s: str) -> str:
         
         # If a var is found
         elif s[slen] == "v":
+            print("v trigger")
 
             # If there is space to the right of the v and it is 'e'
             if slen < len(s)-1:
@@ -27,6 +27,7 @@ def parse(s: str) -> str:
                         result = result
                     else:
                         # If a backslash to the right does exist, make slen skip over the backslash
+                        print("HERE!")
                         slen -= 1
             
             # Else, this e is the first. append e to the start of result
@@ -35,19 +36,22 @@ def parse(s: str) -> str:
 
         # If an opening bracket is found, return recursively
         elif s[slen] == "(":
+            print("( trigger")
             result = "(" + result
         
         # If a closing bracket is found, recursively parse the inside of the bracket.
         elif s[slen] == ")":
+            print(") trigger")
+
             if(slen == 0):
-                print("Error: Unclosed Bracket")
+                print("Error: Closed with no opened bracket")
             else:
                 result = ")" + result
-                result = parse(s[:-1]) + result
+                result = parse(s[:slen]) + result
 
                 stack = []
                 stack.append(")")
-                tempslen = slen
+                
 
                 while stack != [] and tempslen > 0:
                     if s[tempslen] == ")":
@@ -57,6 +61,18 @@ def parse(s: str) -> str:
                     
                     tempslen -= 1
 
+                print("before:", s, slen, s[slen], result)
+
+                
+                if result[-3:] == "(e)":
+                    result = result[:-3] + "e"
+                    print("ERASURE!", result)
+
+                if result[-4:-1] == "(e)":
+                    result = result[:-4] + "e"
+                    print("ERASURE!", result)
+
+                
             # Subtract from slen the distance from this bracket to the associated opener
 
             slen -= slen - tempslen
@@ -65,10 +81,11 @@ def parse(s: str) -> str:
             if not (result[0:2] == "(e)"):
                 ("Error at index", slen, ": no expr in the brackets or no closing brackets")
 
+        print(result)
         # Follow to next loop        
         slen -= 1
 
     return result
 
 
-print(parse(""))
+print("Parse:",parse("\\v((v)(v))"))
