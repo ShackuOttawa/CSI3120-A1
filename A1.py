@@ -122,6 +122,18 @@ def parse(s: str) -> str:
     acceptedValues = ["v", "(", ")", ".", "\\"]
     result = ""
     bracketHolder = ""
+    bracketCounter = 0
+    i = 0
+    for letter in s:
+        if letter == "(":
+            bracketCounter+=1
+        elif letter == ")":
+            bracketCounter-=1
+        if bracketCounter < 0:
+            print("Invalid number of brackets at index", i)
+        i += 1
+    if bracketCounter > 0:
+         print("Invalid number of brackets")
 
     # Go through the full length of string s
     while slen != -1:
