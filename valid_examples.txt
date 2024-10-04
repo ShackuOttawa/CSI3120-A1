@@ -1,23 +1,7 @@
-a \x(x b)
-a b
+(A B)
+abc
 a b c
 a (b c)
-\x.\y.x y
-\x (x b)
-\x(x b)
-\x (x (b c))
-\x (x b c)
-(a)
-\x.(x z)
 (\x a b)
-\x.x y z
-\x.a bcd
-\x a b
-(\x a b)
-\x((a) (b))
-\x (a)
+(\x((a)(b)))
 \x. a b
-(a) (b) (\x(x b)) (\x(x yz))
-(a b)
-(a) (b)
-(a) (b) (c) (d)
