@@ -85,7 +85,6 @@ def parse_tokens(s_: str) -> Union[List[str], bool]:
     s = tokenizer(s)
     tokens = s
     s = "".join(s).replace(" ", "")
-    s = s[1:-1]
     s = parse(s)
     if('(' in s or ')' in s):
         print("problem", s)
@@ -108,12 +107,16 @@ def tokenizer(s: str) -> List[str]:
             # Find the full variable and replace with 'v'
             last = findFullVar(s, i)
             # Add variable only if it is a valid var name
+            # If the variable is only one character, add it
+            if i == last:
+                result.append('v')
             # If the variable is the last part of the string
-            if(last + 1 == len(s)):
+            elif(last + 1 == len(s)):
                 if(is_valid_var_name(s[i:])):
                     result.append('v')
             # If the variable is not the last part of the string
             elif(last + 1 < len(s)):
+                print(i, last)
                 if(is_valid_var_name(s[i:last])):
                     result.append('v')
 
@@ -140,6 +143,8 @@ def parse(s: str) -> str:
     slen = len(s) - 1
     acceptedValues = ["v", "e", "(", ")", ".", "\\"]
 
+    print("String:", s)
+
     # Go through the full length of string s
     while s != "e":
 
@@ -153,21 +158,25 @@ def parse(s: str) -> str:
         # Invalid character error
         if s[slen] not in acceptedValues:
             print("Invalid character at index", slen, ":", s[slen])
+            return "x"
         
         # If s has no variables or expressions, return error
         if("v" not in s and "e" not in s):
             return "x"
         
         # Bracket checker
+        index = 0
         brackets = 0
-        for i in s:
-            if s[i] == "(":
+        while index < len(s):
+            if s[index] == "(":
                 brackets += 1
-            if s[i] == ")":
+            if s[index] == ")":
                 brackets -= 1
             
             if brackets < 0:
                 return "x"
+            
+            index += 1
         
         if brackets != 0:
             return "x"
@@ -234,9 +243,8 @@ def parse(s: str) -> str:
         # If a right bracket is found
         elif s[slen] == ")":
             # If there is a left bracket directly to its left, throw an error
-            if slen == 0:
-                if s[slen-1] == "(":
-                    return "x"
+            if s[slen-1] == "(":
+                return "x"
             # If the right bracket is the first character, throw an error
             if slen == 0:
                 return "x"

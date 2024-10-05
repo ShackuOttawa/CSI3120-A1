@@ -9,8 +9,8 @@ def parse(s: str) -> str:
     while s != "e":
 
         # Reset iterator if negative
-        if(slen <  0):
-            slen = len(s) - 1
+        '''if(slen <  0):
+            slen = len(s) - 1'''
         
         # Testing purposes. delete when final
         print(slen, s, s[slen], len(s))
@@ -24,15 +24,18 @@ def parse(s: str) -> str:
             return "x"
         
         # Bracket checker
+        index = 0
         brackets = 0
-        for i in s:
-            if s[i] == "(":
+        while index < len(s):
+            if s[index] == "(":
                 brackets += 1
-            if s[i] == ")":
+            if s[index] == ")":
                 brackets -= 1
             
             if brackets < 0:
                 return "x"
+            
+            index += 1
         
         if brackets != 0:
             return "x"
@@ -99,9 +102,8 @@ def parse(s: str) -> str:
         # If a right bracket is found
         elif s[slen] == ")":
             # If there is a left bracket directly to its left, throw an error
-            if slen == 0:
-                if s[slen-1] == "(":
-                    return "x"
+            if s[slen-1] == "(":
+                return "x"
             # If the right bracket is the first character, throw an error
             if slen == 0:
                 return "x"
