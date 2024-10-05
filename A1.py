@@ -107,7 +107,16 @@ def tokenizer(s: str) -> List[str]:
         if s[i].isalpha():
             # Find the full variable and replace with 'v'
             last = findFullVar(s, i)
-            result.append('v')
+            # Add variable only if it is a valid var name
+            # If the variable is the last part of the string
+            if(last + 1 == len(s)):
+                if(is_valid_var_name(s[i:])):
+                    result.append('v')
+            # If the variable is not the last part of the string
+            elif(last + 1 < len(s)):
+                if(is_valid_var_name(s[i:last])):
+                    result.append('v')
+
             i = last + 1  # Move i to the next character after the word
         else:
             # Non-alphabetic characters are kept as they are
@@ -127,83 +136,142 @@ def findFullVar(s: str, start: int) -> int:
 # Main parse function. Takes string s and should return "e" if a valid string
 def parse(s: str) -> str:
 
-    # Iterator variable
+    # Iterator variable slen is the initial string length
     slen = len(s) - 1
-    acceptedValues = ["v", "(", ")", ".", "\\"]
-    result = ""
+    acceptedValues = ["v", "e", "(", ")", ".", "\\"]
 
     # Go through the full length of string s
-    while slen != -1:
+    while s != "e":
+
+        # Reset iterator if negative
+        if(slen <  0):
+            slen = len(s) - 1
+        
+        # Testing purposes. delete when final
+        print(slen, s, s[slen], len(s))
 
         # Invalid character error
         if s[slen] not in acceptedValues:
             print("Invalid character at index", slen, ":", s[slen])
         
+        # If s has no variables or expressions, return error
+        if("v" not in s and "e" not in s):
+            return "x"
+        
+        # Bracket checker
+        brackets = 0
+        for i in s:
+            if s[i] == "(":
+                brackets += 1
+            if s[i] == ")":
+                brackets -= 1
+            
+            if brackets < 0:
+                return "x"
+        
+        if brackets != 0:
+            return "x"
+        
         # If a var is found
         elif s[slen] == "v":
-
-            # If there is space to the right of the v and it is 'e'
-            if slen < len(s)-1:
-                if s[slen + 1] == "e":
-
-                    # If there is *not* space to the right and the character to the right is not \, do nothing
-                    if not (slen > -1 and s[slen - 1] == "\\"):
-                        result = result
+            # If there is space to the right
+            if(slen < len(s) - 1):
+                # If the space to the right is an expr
+                if(s[slen+1] == "e"):
+                    # If there is space to the left
+                    if(slen > 0):
+                        # If there is a backslash to the left of the current var
+                        if(s[slen-1] == "\\"):
+                            # Remove the backslash and the var, replacing it with an e
+                            s = s[:slen-1] + s[slen+1:]
+                        # There is space to the left but not a backslash. Replace with e
+                        else:
+                            s = s[:slen] + s[slen+1:]
                     else:
-                        # If a backslash to the right does exist, make slen skip over the backslash
-                        print("Backslash spotted!")
-                        slen -= 1
+                        # No space to the left. Remove the first value: expr expr rule
+                        s = s[slen+1:]
+                # If the space to the right is a right bracket, and if there is space to the left
+                elif(s[slen+1] == ")"):
+                    # If there is a space to the left
+                    if(slen > 0):
+                        # If the space to the left is a left bracket
+                        if(s[slen-1] == "("):
+                            # If the space to the right is the last character of the string
+                            if(slen+2 == len(s)):
+                                # Remove brackets
+                                s = s[:slen-1] + "e"
+                            else:
+                                # The space to the right is not the last character of the string. Remove brackets
+                                s = s[:slen-1] + "e" + s[slen+2:]
+                        # The space to the left is not a left bracket. Turn this var into an expr
+                        else:
+                            s = s[:slen] + "e" + s[slen+1:]
             
-            # Else, this e is the first. append e to the start of result
+            # If there is nothing to the right, turn this var into an expr
             else:
-                result = "e" + result
-
-        # If an opening bracket is found, return recursively
-        elif s[slen] == "(":
-            result = "(" + result
+                s = s[:slen] + "e"
         
-        # If a closing bracket is found, recursively parse the inside of the bracket.
+        # If an expr is found
+        elif s[slen] == "e":
+            # If there is space to the right
+            if(slen < len(s) - 1):
+                # If the space to the right is a right bracket, and if there is space to the left
+                if(s[slen+1] == ")" and slen > 0):
+                    # If the space to the left is a left bracket
+                    if(s[slen-1] == "("):
+                        # If the space to the right is the last character of the string
+                        if(slen+2 == len(s)):
+                            # Remove brackets
+                            s = s[:slen-1] + "e"
+                        else:
+                            # The space to the right is not the last character of the string. Remove brackets
+                            s = s[:slen-1] + "e" + s[slen+2:]
+
+                # If there is an expr to the right of the current var
+                elif(s[slen+1] == "e"):
+                    s = s[:slen] + s[slen+1:]
+                
+        # If a right bracket is found
         elif s[slen] == ")":
-            tempslen = slen
+            # If there is a left bracket directly to its left, throw an error
+            if slen == 0:
+                if s[slen-1] == "(":
+                    return "x"
+            # If the right bracket is the first character, throw an error
+            if slen == 0:
+                return "x"
 
-            if(slen == 0):
-                print("Error: Closed with no opened bracket")
+
+        # If a left bracket is found
+        elif s[slen] == "(":
+            # If the left bracket is the last character, throw an error
+            if slen == len(s)-1:
+                return "x"
+
+        # If a dot is found
+        elif s[slen] == ".":
+            # If there is 2 spaces behind and 1 space ahead
+            if(slen >= 2 and slen != len(s)-1):
+                # A dot must be preceded by \v and must have any character ahead except )
+                if(s[slen-1] == "v" and s[slen-2] == "\\" and s[slen+1] != ")"):
+                    s = s[:slen] + s[slen+1:]
             else:
-                result = ")" + result
-                result = parse(s[:slen]) + result
-
-                stack = []
-                stack.append(")")
-                
-
-                while stack != [] and tempslen > 0:
-                    if s[tempslen] == ")":
-                        stack.append(")")
-                    if s[tempslen] == "(":
-                        stack.pop()
-                    
-                    tempslen -= 1
-
-                if result[-3:] == "(e)":
-                    result = result[:-3] + "e"
-
-                if result[-4:-1] == "(e)":
-                    result = result[:-4] + "e"
-
-                
-            # Subtract from slen the distance from this bracket to the associated opener
-
-            slen -= slen - tempslen
-
-            
-            if not (result[0:2] == "(e)"):
-                ("Error at index", slen, ": no expr in the brackets or no closing brackets")
+                return "x"
+        
+        # If a backslash is found
+        elif s[slen] == "\\":
+            # If there is a space ahead
+            if(slen < len(s)-2):
+                # If the character ahead is not a var, return error
+                if not (s[slen+1] == "v"):
+                    return "x"
+            else:
+                return "x"
 
         # Follow to next loop        
         slen -= 1
 
-    return result
-
+    return s
 
 def read_lines_from_txt_check_validity(fp: [str, os.PathLike]) -> None:
     """
