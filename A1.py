@@ -214,7 +214,7 @@ def parse(s: str) -> str:
         
         # If s has no variables or expressions, return error
         if("v" not in s and "e" not in s):
-            return "x"
+            return "Invalid input at index", slen, ":", s
         
         # Bracket checker
         index = 0
@@ -226,12 +226,12 @@ def parse(s: str) -> str:
                 brackets -= 1
             
             if brackets < 0:
-                return "x"
+                return "Invalid amount of closing brackets at index", slen, ":", s[slen]
             
             index += 1
         
         if brackets != 0:
-            return "x"
+            return "Invalid amount of total brackets at index", slen, "in :", s
         
         # If a var is found
         elif s[slen] == "v":
@@ -296,17 +296,17 @@ def parse(s: str) -> str:
         elif s[slen] == ")":
             # If there is a left bracket directly to its left, throw an error
             if s[slen-1] == "(":
-                return "x"
+                return "Invalid input: Empty bracket expression at index", slen,
             # If the right bracket is the first character, throw an error
             if slen == 0:
-                return "x"
+                return "Invalid input, closing bracket with no opening bracket at index", slen, ":", s[:slen]
 
 
         # If a left bracket is found
         elif s[slen] == "(":
             # If the left bracket is the last character, throw an error
             if slen == len(s)-1:
-                return "x"
+                return "Invalid input at index", slen, ": can not end input with an open bracket", s[slen]
 
         # If a dot is found
         elif s[slen] == ".":
@@ -316,7 +316,7 @@ def parse(s: str) -> str:
                 if(s[slen-1] == "v" and s[slen-2] == "\\" and s[slen+1] != ")"):
                     s = s[:slen] + s[slen+1:]
             else:
-                return "x"
+                return "Invalid usage of", s[slen], "at index", slen
         
         # If a backslash is found
         elif s[slen] == "\\":
@@ -324,9 +324,9 @@ def parse(s: str) -> str:
             if(slen < len(s)-2):
                 # If the character ahead is not a var, return error
                 if not (s[slen+1] == "v"):
-                    return "x"
+                    return "Invalid usage of Lambda statement at index", slen, ":", s[slen]
             else:
-                return "x"
+                return "Invalid usage of Lambda statement at index", slen, ":", s[slen]
 
         # Follow to next loop        
         slen -= 1
