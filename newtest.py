@@ -1,3 +1,2 @@
-s = "\\v. v v v"
-
-print(s[0], s[1])
+dashes = "-" * 4  # Create a string of dashes
+print(f"{dashes}wagawaga")

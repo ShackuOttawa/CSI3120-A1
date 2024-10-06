@@ -64,8 +64,26 @@ class ParseTree:
         self.root = root
 
     def print_tree(self, node: Optional[Node] = None, level: int = 0) -> None:
-        # TODO
-        print("")
+
+        dashes = "----" * level
+
+        if level == 0:
+            print(self.root.elem)
+            level = 1
+            dashes = "----" * level
+        #else:
+        #    print(f"{dashes}{self.root.elem}")
+
+        i = 0
+        while i < len(self.root.children):
+            if isinstance(self.root.children[i], str):
+                print(f"{dashes}{self.root.children[i]}")
+            elif isinstance(self.root.children[i], Node):
+                print(f"{dashes}{self.root.children[i].elem}")
+                ParseTree(self.root.children[i]).print_tree(None, level+1)
+            i += 1
+
+        
 
 
 
@@ -82,23 +100,63 @@ def parse_tokens(s_: str) -> Union[List[str], bool]:
     """
 
     s = s_[:]  #  Don't modify the original input string
-    s = tokenizer(s)
-    tokens = s
+
+    tokens = tokenizer(s)
+
+    s = parserPreparer(s)
+    
     s = "".join(s).replace(" ", "")
     s = parse(s)
-    if('(' in s or ')' in s):
-        print("problem", s)
-        print("Input has imbalance in brackets.")
-
-    tokenpreparer = "".join(tokens).replace(" ", "").replace("v", "<var>")
 
     if s == "e":
-        return [tokenpreparer]
+        return tokens
     else:
         return False
+    
+def tokenizer(s:str) -> List[str]:
+    i = 0
+    result = []
+    dotbrackets = 0
+
+    while i < len(s):
+        
+        if s[i].isalpha():
+            # Find the full variable, append it to the result
+            last = findFullVar(s, i)
+            # Add variable only if it is a valid var name
+            # If the variable is only one character, add it
+            if i == last:
+                result.append(s[i])
+
+            # If the variable is the last part of the string
+            elif(last + 1 == len(s)):
+                if(is_valid_var_name(s[i:])):
+                    result.append(s[i:])
+            # If the variable is not the last part of the string
+            elif(last + 1 < len(s)):
+                if(is_valid_var_name(s[i:last])):
+                    result.append(s[i:last+1])
+
+            i = last + 1  # Move i to the next character after the word
+        else:
+            # dots are converted to brackets
+            if s[i] == ".":
+                result.append("(")
+                dotbrackets += 1
+            elif s[i] != " ":
+                result.append(s[i])
+            i += 1
+    
+    # Add in final dot brackets
+    while dotbrackets > 0:
+        result.append(")")
+        dotbrackets -= 1
+            
+    # return the result list
+    return result
 
 
-def tokenizer(s: str) -> List[str]:
+def parserPreparer(s: str) -> List[str]:
     i = 0
     result = []
     
@@ -116,7 +174,6 @@ def tokenizer(s: str) -> List[str]:
                     result.append('v')
             # If the variable is not the last part of the string
             elif(last + 1 < len(s)):
-                print(i, last)
                 if(is_valid_var_name(s[i:last])):
                     result.append('v')
 
@@ -143,17 +200,12 @@ def parse(s: str) -> str:
     slen = len(s) - 1
     acceptedValues = ["v", "e", "(", ")", ".", "\\"]
 
-    print("String:", s)
-
     # Go through the full length of string s
     while s != "e":
 
         # Reset iterator if negative
         if(slen <  0):
             slen = len(s) - 1
-        
-        # Testing purposes. delete when final
-        print(slen, s, s[slen], len(s))
 
         # Invalid character error
         if s[slen] not in acceptedValues:
@@ -329,8 +381,44 @@ def build_parse_tree_rec(tokens: List[str], node: Optional[Node] = None) -> Node
     :return: a node with children whose tokens are variables, parenthesis, slashes, or the inner part of an expression
     """
 
-    #TODO
-    return Node()
+    # Node(elem); elem is the full contents of the Node
+    thisNode = Node("_".join(tokens))
+    
+    i = 0
+
+    while i < len(tokens):
+        # when a backslash is not the beginning token, create child chain from the backslash onwards
+        if tokens[i] == "\\" and i != 0:
+            thisNode.add_child_node(build_parse_tree_rec(tokens[i:]))
+            i = len(tokens)
+        # when an opening bracket is not the beginning term, create child chain up to the associated closing bracket.
+        elif tokens[i] == "(" and i != 0:
+            bracketCounter = 1
+            j = i+1
+            while bracketCounter != 0:
+                if tokens[j] == "(":
+                    bracketCounter += 1
+                elif tokens[j] == ")":
+                    bracketCounter -= 1
+                
+                j += 1
+
+            if j < len(tokens):
+                thisNode.add_child_node(build_parse_tree_rec(tokens[i:j]))
+            else:
+                thisNode.add_child_node(build_parse_tree_rec(tokens[i:j]))
+            
+            if(j == len(tokens)-1):
+                i = len(tokens)
+            else:
+                i = j
+        
+        else:
+            thisNode.add_child_node(tokens[i])
+        
+        i += 1
+
+    return thisNode
 
 
 def build_parse_tree(tokens: List[str]) -> ParseTree:

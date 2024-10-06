@@ -9,8 +9,8 @@ def parse(s: str) -> str:
     while s != "e":
 
         # Reset iterator if negative
-        '''if(slen <  0):
-            slen = len(s) - 1'''
+        if(slen <  0):
+            slen = len(s) - 1
         
         # Testing purposes. delete when final
         print(slen, s, s[slen], len(s))
