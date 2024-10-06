@@ -214,7 +214,7 @@ def parse(s: str) -> str:
         
         # If s has no variables or expressions, return error
         if("v" not in s and "e" not in s):
-            return "Invalid input at index", slen, ":", s
+            print("String has no variables or expressions. Index:", slen, ":", s)
         
         # Bracket checker
         index = 0
@@ -226,12 +226,14 @@ def parse(s: str) -> str:
                 brackets -= 1
             
             if brackets < 0:
-                return "Invalid amount of closing brackets at index", slen, ":", s[slen]
+                print("Invalid amount of closing brackets at index", slen, ":", s[slen])
+                return("x")
             
             index += 1
         
         if brackets != 0:
-            return "Invalid amount of total brackets at index", slen, "in :", s
+            print("Invalid amount of total brackets at index", slen, "in :", s)
+            return("x")
         
         # If a var is found
         elif s[slen] == "v":
@@ -296,17 +298,20 @@ def parse(s: str) -> str:
         elif s[slen] == ")":
             # If there is a left bracket directly to its left, throw an error
             if s[slen-1] == "(":
-                return "Invalid input: Empty bracket expression at index", slen,
+                print("Invalid input: Empty bracket expression at index", slen)
+                return "x"
             # If the right bracket is the first character, throw an error
             if slen == 0:
-                return "Invalid input, closing bracket with no opening bracket at index", slen, ":", s[:slen]
+                print("Invalid input, closing bracket with no opening bracket at index", slen, ":", s[:slen])
+                return "x"
 
 
         # If a left bracket is found
         elif s[slen] == "(":
             # If the left bracket is the last character, throw an error
             if slen == len(s)-1:
-                return "Invalid input at index", slen, ": can not end input with an open bracket", s[slen]
+                print("Invalid input at index", slen, ": can not end input with an open bracket", s[slen])
+                return "x"
 
         # If a dot is found
         elif s[slen] == ".":
@@ -316,7 +321,8 @@ def parse(s: str) -> str:
                 if(s[slen-1] == "v" and s[slen-2] == "\\" and s[slen+1] != ")"):
                     s = s[:slen] + s[slen+1:]
             else:
-                return "Invalid usage of", s[slen], "at index", slen
+                print("Invalid usage of", s[slen], "at index", slen)
+                return "x"
         
         # If a backslash is found
         elif s[slen] == "\\":
@@ -324,9 +330,11 @@ def parse(s: str) -> str:
             if(slen < len(s)-2):
                 # If the character ahead is not a var, return error
                 if not (s[slen+1] == "v"):
-                    return "Invalid usage of Lambda statement at index", slen, ":", s[slen]
+                    print("Invalid usage of Lambda statement at index", slen, ":", s[slen])
+                    return "x"
             else:
-                return "Invalid usage of Lambda statement at index", slen, ":", s[slen]
+                print("Invalid usage of Lambda statement at index", slen, ":", s[slen])
+                return "x"
 
         # Follow to next loop        
         slen -= 1
@@ -389,8 +397,8 @@ def build_parse_tree_rec(tokens: List[str], node: Optional[Node] = None) -> Node
     while i < len(tokens):
         # when a backslash is not the beginning token, create child chain from the backslash onwards
         if tokens[i] == "\\" and i != 0:
-            thisNode.add_child_node(build_parse_tree_rec(tokens[i:]))
-            i = len(tokens)
+            thisNode.add_child_node(build_parse_tree_rec(tokens[i:-1]))
+            i = len(tokens)-2
         # when an opening bracket is not the beginning term, create child chain up to the associated closing bracket.
         elif tokens[i] == "(" and i != 0:
             bracketCounter = 1
@@ -408,10 +416,7 @@ def build_parse_tree_rec(tokens: List[str], node: Optional[Node] = None) -> Node
             else:
                 thisNode.add_child_node(build_parse_tree_rec(tokens[i:j]))
             
-            if(j == len(tokens)-1):
-                i = len(tokens)
-            else:
-                i = j
+            i = j-1
         
         else:
             thisNode.add_child_node(tokens[i])
